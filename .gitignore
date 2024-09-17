@@ -10,3 +10,6 @@ requests
 # unfinished files
 small_server.py
 half_replicated_server.py
+
+# test data
+!tests/test_data/*.json
