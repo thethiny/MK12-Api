@@ -1,25 +1,22 @@
-import base64
 import datetime
 import json
 import re
 import os
-
 import requests
-from flask import Flask, Response, request
-from serialize import json_to_ag
-from deserialize import deserialize as ag_to_json
 
+from flask import Flask, Response, request
 from dotenv import load_dotenv
 
-env = load_dotenv("env/MK12.env")
+from src.x_ag import json_to_ag, ag_to_json
 
-
-app = Flask("MK12_MITM_Server")
+env = os.environ if load_dotenv("env/MK12.env") else {}
+app = Flask(env.get("SERVER", "MITM_Server"))
+APP_PORT = int(env.get("PORT", 12181))
 
 MK12_DOMAIN = env.get("ENDPOINT")
-MK12_DOMAIN_PATTERN = re.compile(r"(?i)(?:^" + re.escape(MK12_DOMAIN) + r")(?:/)(.*)")
 if not MK12_DOMAIN:
     raise ValueError(f"Missing value for `ENDPOINT`")
+MK12_DOMAIN_PATTERN = re.compile(r"(?i)(?:^" + re.escape(MK12_DOMAIN) + r")(?:/)(.*)")
 
 os.makedirs("requests", exist_ok=True)
 
@@ -95,11 +92,13 @@ def redirect_route(url: str):
     with open(os.path.join(cur_request_root, "response.json"), "w") as f:
         try:
             json_data = response.get_json()
+            print("Data was JSON")
         except Exception:
             json_data = ag_to_json(response.data)
+            print("Data was x-ag-binary")
         json.dump(json_data, f, ensure_ascii=False, indent=4)
     print("Redirected")
     return response
 
 if __name__ == "__main__":
-    app.run(port=12181)
+    app.run(port=APP_PORT)

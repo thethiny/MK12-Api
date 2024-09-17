@@ -1,8 +1,10 @@
-from random_data import get_random_collection
 import base64
 import datetime
 import json
+
 from math import ceil, log
+
+from src.utils.random_data import get_random_collection
 
 
 def get_size(x: object):
@@ -139,22 +141,3 @@ def json_to_ag(data):
             resp += json_to_ag(value)
 
     return resp
-
-
-mode = "random"
-# mode = "json"
-
-if __name__ == "__main__":
-    if mode == "random":
-        data = get_random_collection()
-        print(data)
-        data = json_to_ag(data)
-        print(data)
-    elif mode == "json":
-        with open("premium_shop.json") as file:
-            data = json_to_ag(json.load(file))
-            print(data)
-            b64 = base64.encodebytes(data).decode().strip()
-            print(b64)
-    else:
-        raise ValueError(f"Unsupported Mode: {mode}")
