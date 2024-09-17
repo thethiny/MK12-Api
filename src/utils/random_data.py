@@ -46,3 +46,17 @@ def get_random_collection():
         return get_random_dict()
     else:
         return get_random_list()
+
+def get_static_collection():
+    return {
+        "intType": 3,
+        "floatType": 5.1,
+        "doubleType": 14.12983123123,
+        "intTypeAgain": 5,
+        "boolType": True,
+        "nullType": None,
+        "listCharType": [
+            "this", "is", "the", "ultimate", "showdown"
+        ],
+        "listIntType": list(range(5)),
+    }
