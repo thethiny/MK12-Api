@@ -7,7 +7,7 @@ import requests
 from flask import Flask, Response, request
 from dotenv import load_dotenv
 
-from src.x_ag import json_to_ag, ag_to_json
+from src.utils.convertors import parse_request_output, save_data_as
 
 env = os.environ if load_dotenv("env/MK12.env") else {}
 app = Flask(env.get("SERVER", "MITM_Server"))
@@ -50,8 +50,6 @@ def mk_redirect(url, data = None):
     response = Response(resp.content, resp.status_code, headers)
     return response
 
-CURRENT_REQUEST = None
-
 @app.route(
     "/mitm/<path:url>",
     methods=[
@@ -67,37 +65,35 @@ CURRENT_REQUEST = None
     ],
 )
 def redirect_route(url: str):
-    global CURRENT_REQUEST
-    CURRENT_REQUEST = datetime.datetime.utcnow().timestamp()
+    request_time = datetime.datetime.utcnow().timestamp()
     print(request, url)
-    cur_request_root = os.path.join("requests", f"{CURRENT_REQUEST}_{request.method}_{url.replace('/', '+')}")
+    cur_request_root = os.path.join("requests", f"{request_time}_{request.method}_{url.replace('/', '+')}")
     os.makedirs(cur_request_root, exist_ok=True)
+
     with open(os.path.join(cur_request_root, "request_headers.json"), "w") as f:
         json.dump(dict(request.headers), f, ensure_ascii=False, indent=4)
+
     with open(os.path.join(cur_request_root, "request.bin"), "wb") as f:
         f.write(request.get_data())
-    with open(os.path.join(cur_request_root, "request.json"), "w") as f:
-        try:
-            json_data = request.get_json()
-        except Exception:
-            json_data = ag_to_json(request.get_data())
-        json.dump(json_data, f, ensure_ascii=False, indent=4)
-    # Edit the contents of json_data, example
-    # json_data["contextual_droplists"]["shrine_loot_payload"]["data"]["MK12InventoryLootItem"][0]["amount"] = 9999999
-    # converted_data = convert json_data to ag
-    # response = mk_redirect(url, data=converted_data)
+
+    json_data, ext = parse_request_output(request, request.get_data())
+    save_data_as(cur_request_root, "request", ext, json_data)
+
+    # End of request
+
     response = mk_redirect(url)
-    with open(os.path.join(cur_request_root, "response.bin"), "wb") as f:
+
+    # Start of response
+
+    with open(os.path.join(cur_request_root, "response_headers.json"), "w") as f:
+        json.dump(dict(response.headers), f, ensure_ascii=False, indent=4)
+
+    with open(os.path.join(cur_request_root, "response.bin"), "wb") as f: 
         f.write(response.data)
-    with open(os.path.join(cur_request_root, "response.json"), "w") as f:
-        try:
-            json_data = response.get_json()
-            print("Data was JSON")
-        except Exception:
-            json_data = ag_to_json(response.data)
-            print("Data was x-ag-binary")
-        json.dump(json_data, f, ensure_ascii=False, indent=4)
-    print("Redirected")
+
+    json_data, ext = parse_request_output(response, response.data)
+    save_data_as(cur_request_root, "response", ext, json_data)
+
     return response
 
 if __name__ == "__main__":
