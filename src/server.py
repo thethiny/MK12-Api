@@ -8,6 +8,9 @@ from flask import Flask, Response, request
 from dotenv import load_dotenv
 
 from src.utils.convertors import parse_request_output, save_data_as
+
+attacked_urls = {
+}
 # SSC = no auth
 # /profiles/<id> and /accounts/<id> require ANY creds
 
@@ -32,35 +35,49 @@ logging_folder = os.path.join("requests", f"{launch_date}_{datetime.now().timest
 os.makedirs(logging_folder, exist_ok=True)
 
 
-def mk_redirect(url, data = None):
-    print("Redirect Request", url)
+def mk_call(url, data):
+    
     url = f"{MK12_DOMAIN}/{url}"
-    # request.headers.pop("Host", None)
     resp = requests.request(
-        method=request.method,
-        url=url,
-        headers={k:v for k, v in request.headers.items() if k != "Host"},
-        data=data or request.get_data(),
-        params=request.args, # type: ignore
-        cookies=request.cookies,
-        allow_redirects=False,
-    )
-
-    excluded_headers = [
-        "content-encoding",
-        "content-length",
-        "transfer-encoding",
-        "connection",
-    ]
+            method=request.method,
+            url=url,
+            headers={k:v for k, v in request.headers.items() if k != "Host"},
+            data=data,
+            params=request.args, # type: ignore
+            cookies=request.cookies,
+            allow_redirects=False,
+        )
+    
     headers = [
         (name, value)
         for (name, value) in resp.raw.headers.items()
         if name.lower() not in excluded_headers
     ]
+    
+    return resp, headers
+
+def mk_redirect(url, data = None):
+    print("Redirect Request", url)
+    
+    resp, headers = mk_call(url, data or request.get_data())
 
     print("Request Redirected")
     response = Response(resp.content, resp.status_code, headers)
     return response
+
+def mk_attack(url, injected_response, data = {}, skip_headers = False):
+    if data:
+        raise NotImplementedError(f"POST data is not implemented")
+    
+    if skip_headers:
+        return Response(injected_response, 200, [("content-type", "application/x-ag-binary")])
+    
+    resp, headers = mk_call(url, data or request.get_data())
+    
+    response = Response(injected_response, resp.status_code, headers)
+
+    return response
+
 
 @app.route(
     "/mitm/<path:url>",
@@ -102,6 +119,11 @@ def redirect_route(url: str):
     save_data_as(cur_request_root, "request", ext, json_data)
 
     # End of request
+
+    if url in attacked_urls:
+        print(f"Attacked URL :=: {url}")
+        response = attacked_urls[url]
+        return mk_attack(url, response)
 
     response = mk_redirect(url)
 
