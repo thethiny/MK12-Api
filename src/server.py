@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 import re
 import os
@@ -8,6 +8,15 @@ from flask import Flask, Response, request
 from dotenv import load_dotenv
 
 from src.utils.convertors import parse_request_output, save_data_as
+# SSC = no auth
+# /profiles/<id> and /accounts/<id> require ANY creds
+
+excluded_headers = [
+    "content-encoding",
+    "content-length",
+    "transfer-encoding",
+    "connection",
+]
 
 env = os.environ if load_dotenv("env/MK12.env") else {}
 app = Flask(env.get("SERVER", "MITM_Server"))
@@ -18,7 +27,10 @@ if not MK12_DOMAIN:
     raise ValueError(f"Missing value for `ENDPOINT`")
 MK12_DOMAIN_PATTERN = re.compile(r"(?i)(?:^" + re.escape(MK12_DOMAIN) + r")(?:/)(.*)")
 
-os.makedirs("requests", exist_ok=True)
+launch_date = datetime.now().strftime("%Y-%m-%d")  # Format: YYYY-MM-DD
+logging_folder = os.path.join("requests", f"{launch_date}_{datetime.now().timestamp()}")
+os.makedirs(logging_folder, exist_ok=True)
+
 
 def mk_redirect(url, data = None):
     print("Redirect Request", url)
@@ -65,10 +77,20 @@ def mk_redirect(url, data = None):
     ],
 )
 def redirect_route(url: str):
-    request_time = datetime.datetime.utcnow().timestamp()
+    request_time = datetime.utcnow().timestamp()
     print(request, url)
-    cur_request_root = os.path.join("requests", f"{request_time}_{request.method}_{url.replace('/', '+')}")
+    cur_request_root = os.path.join(
+        logging_folder, f"{request_time}_{request.method}_{url.replace('/', '+')}"
+    )
     os.makedirs(cur_request_root, exist_ok=True)
+    
+    with open(os.path.join(cur_request_root, "request_params.json"), "w", encoding="utf-8") as f:
+        query_dict = request.args.to_dict(False)
+        query_string = request.query_string.decode("utf-8")
+        json.dump({
+            "params": query_dict,
+            "query_string": query_string
+        }, f, ensure_ascii=False, indent=4)
 
     with open(os.path.join(cur_request_root, "request_headers.json"), "w") as f:
         json.dump(dict(request.headers), f, ensure_ascii=False, indent=4)
