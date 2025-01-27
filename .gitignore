@@ -2,7 +2,7 @@
 *.pyc
 
 # Requests
-requests
+requests*
 *.bson
 *.bin
 *json
