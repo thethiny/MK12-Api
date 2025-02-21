@@ -38,6 +38,11 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r requirements.txt
 
+      - name: dependencies-pyinstaller
+        run: |
+            python -m pip install --upgrade pip
+            pip install -r pyinstaller
+
       - name: Get Release Version
         id: release_version
         run: echo "::set-output name=server_version::n$(date +%d%m%y)"
