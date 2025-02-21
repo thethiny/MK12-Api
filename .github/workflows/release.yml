@@ -59,8 +59,9 @@ jobs:
           prerelease: false
 
       - name: Create Package
+        shell: powershell
         run: |
-          zip -r "./dist/${{ steps.release_version.outputs.server_version }}.zip" "./dist/server.exe" "./env"
+            Compress-Archive -Path "./dist/server.exe", "./env" -DestinationPath "./dist/${{ steps.release_version.outputs.server_version }}.zip"
           
       - name: Upload Server Binaries
         uses: actions/upload-release-asset@v1
