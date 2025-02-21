@@ -57,8 +57,9 @@ class AGMap(IntEnum):
     MAP16 = 1
     MAP32 = 2
     MAP64 = 3
+    CompressedObject = 7 # Gotten form somewhere else
     MAPU1 = 8
-    MAPU2 = 9
+    Calendar = 9
 
 
 AGMapEnum: Dict[EnumMeta, int] = {

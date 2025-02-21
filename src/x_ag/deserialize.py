@@ -1,3 +1,4 @@
+import json
 import struct
 from base64 import b64encode
 from enum import IntEnum
@@ -97,14 +98,24 @@ def parse_maps(data, cursor, data_sub_type):
             val, cursor = parse_general(data, cursor)
             string = f"{key}:{val}"
             elements.append(string)
+    elif data_sub_type == 8:
+        v1, cursor = parse_general(data, cursor)
+        v2, cursor = parse_general(data, cursor)
+        v3, cursor = parse_general(data, cursor)
+        v4, cursor = parse_general(data, cursor)
+        elements.append(f"{v1}:{v2}")
+        elements.append(f"{v3}:{v4}")
+        elements.append(f'"deserialize_extra_meta": 6{data_sub_type}')
     elif data_sub_type == 9:
         for i in range(data_length):
             val, cursor = parse_general(data, cursor)
             string = f'"unk{i+1}":{val}'
             elements.append(string)
+            elements.append(f'"deserialize_extra_meta": 6{data_sub_type}')
     else:
-        raise NotImplementedError(f"Unknown Subtype {data_sub_type} for Maps!")
-    return "{" + ",".join(elements) + "}", cursor
+        raise NotImplementedError(f"Unknown Implementation for Subtype {data_sub_type} for Maps!")
+    ret = "{" + ",".join(elements) + "}"
+    return ret, cursor
 
 
 def parse_time(data, cursor, data_sub_type):
@@ -155,7 +166,12 @@ def deserialize(data: bytes):
     string, cursor = parse_general(data, cursor)
     parsed_string += string
 
-    return eval(parsed_string.encode("unicode-escape").decode())
+    try:
+        return eval(parsed_string.encode("unicode-escape").decode())
+    except TypeError:
+        print("errored")
+        print(parsed_string)
+        raise
 
 
 def get_subtype(value) -> IntEnum:
@@ -191,6 +207,7 @@ if __name__ == "__main__":
         save_to = sys.argv[2]
         print(f"Saving to {save_to}")
         with open(sys.argv[2], "w") as f:
-            f.write(str(deserialized_data))
+            json.dump(deserialized_data, f, ensure_ascii=False, indent=4)
+            # f.write(str(deserialized_data))
     else:
-        print(deserialized_data)
+        print(json.dumps(deserialized_data))

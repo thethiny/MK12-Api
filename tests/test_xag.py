@@ -19,6 +19,13 @@ def shop_data_fixture():
     with open(os.path.join("tests", "test_data", "mk11_example.json")) as file:
         return json.load(file)
 
+@pytest.fixture
+def map_68_fixture():
+    with open(os.path.join("tests", "test_data", "map_68.bin"), "rb") as file:
+        return file.read()
+
+# TODO: Assert specific values
+
 def test_random_collection(random_data_fixture):
     converted = json_to_ag(random_data_fixture)
 
@@ -40,6 +47,8 @@ def test_static_collection_both(static_data_fixture):
     converted = json_to_ag(static_data_fixture)
     converted = ag_to_json(converted)
 
+def test_map_68(map_68_fixture):
+    converted = ag_to_json(map_68_fixture)
 
 if __name__ == "__main__":
     with open(os.path.join("tests", "test_data", "mk11_example.json")) as file:
