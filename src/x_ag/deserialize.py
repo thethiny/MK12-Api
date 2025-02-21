@@ -179,7 +179,7 @@ def get_subtype(value) -> IntEnum:
     subtype: int = value % 0x10
     enum_type = AGMapEnumReverse.get(type_ << 4)
     if enum_type is None:
-        raise Exception(f"Couldn't map byte {value}!")
+        raise Exception(f"Couldn't map byte {value:X}!")
     try:
         enum_subtype: IntEnum = enum_type(subtype) # type: ignore
     except Exception as e:
