@@ -13,3 +13,9 @@ half_replicated_server.py
 
 # test data
 !tests/test_data/*.json
+!tests/test_data/map_68.bin
+
+# PyInstaller
+dist
+build
+*.spec
