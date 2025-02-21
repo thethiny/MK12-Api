@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 import re
 import os
+import traceback
 import requests
 
 from flask import Flask, Response, request
@@ -39,8 +40,11 @@ if not servers_config:
 print("Attacking Endpoints", servers_config)
 
 
-launch_date = datetime.now().strftime("%Y-%m-%d")  # Format: YYYY-MM-DD
-launch_date_folder_name = f"{launch_date}_{datetime.now().timestamp()}"
+launch_date = datetime.now().strftime(r"%Y-%m-%d")  # Format: YYYY-MM-DD
+launch_suffix = datetime.now().strftime(r"%H_%M_%S")
+# launch_date_folder_name = f"{launch_date}_{datetime.now().timestamp()}"
+launch_date_folder_name = f"{launch_date}_{launch_suffix}"
+print("Output folder", launch_date_folder_name)
 
 for server in servers_config:
     server_folder = os.path.join("requests", server, launch_date_folder_name)
@@ -136,8 +140,15 @@ def redirect_route(server_name: str, url: str):
     with open(os.path.join(cur_request_root, "request.bin"), "wb") as f:
         f.write(request.get_data())
 
-    json_data, ext = parse_request_output(request, request.get_data())
-    save_data_as(cur_request_root, "request", ext, json_data)
+    try:
+        json_data, ext = parse_request_output(request, request.get_data())
+        save_data_as(cur_request_root, "request", ext, json_data)
+    except Exception as e:
+        print(f"Failed to parse {url}")
+        traceback.print_exc()
+        with open(os.path.join(cur_request_root, "error"), "w") as f:
+            # Make a file called error to know this didn't pass!
+            pass
 
     # End of request
 
@@ -155,6 +166,9 @@ def redirect_route(server_name: str, url: str):
 
     with open(os.path.join(cur_request_root, "response.bin"), "wb") as f: 
         f.write(response.data)
+
+    with open(os.path.join(cur_request_root, f"{response.status_code}.status_code"), "w") as f:
+        f.write(str(response.status_code))
 
     json_data, ext = parse_request_output(response, response.data)
     save_data_as(cur_request_root, "response", ext, json_data)
