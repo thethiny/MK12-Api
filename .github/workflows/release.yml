@@ -37,7 +37,7 @@ jobs:
         run: |
             python -m pip install --upgrade pip
             pip install -r requirements.txt
-            pip install pyinstaller
+            pip install pyinstaller==6.11.1 pyinstaller-hooks-contrib==2025.1
 
       - name: Get Release Version
         id: release_version
@@ -57,6 +57,10 @@ jobs:
           release_name: Server ${{ env.SERVER_VERSION }}
           draft: false
           prerelease: false
+
+      - name: Create Package
+        run: |
+          zip -r "./dist/${{ steps.release_version.outputs.server_version }}.zip" "./dist/server.exe" "./env"
           
       - name: Upload Server Binaries
         uses: actions/upload-release-asset@v1
