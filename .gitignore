@@ -14,6 +14,7 @@ half_replicated_server.py
 # test data
 !tests/test_data/*.json
 !tests/test_data/map_68.bin
+figure_this_out
 
 # PyInstaller
 dist

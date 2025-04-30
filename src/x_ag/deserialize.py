@@ -167,6 +167,7 @@ def deserialize(data: bytes):
     parsed_string += string
 
     try:
+        nan = float("nan")
         return eval(parsed_string.encode("unicode-escape").decode())
     except TypeError:
         print("errored")

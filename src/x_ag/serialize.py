@@ -111,10 +111,10 @@ def obj_to_type_bytes(obj: object, zero_as_int: bool = True):
         type__ = check_float_double(obj)
         if type__ == "f":
             size = 4
-            type_ = AGFloat._FLT
+            type_ = AGFloat.FLOAT
         elif type__ == "d":
             size = 8
-            type_ = AGFloat.FLOAT
+            type_ = AGFloat.DOUBLE
         else:
             raise ValueError(f"Impossible float type {type__}")
     else:

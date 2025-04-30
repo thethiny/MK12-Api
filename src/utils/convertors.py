@@ -32,7 +32,7 @@ def parse_request_output(request_object, bin_data):
 
 def save_data_as(path: str, name: str, extension, data):
     path = os.path.join(path, f"{name}.{extension.lower()}")
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         if extension == "json":
             json.dump(data, f, ensure_ascii=False, indent=4)
         elif extension == "txt":
