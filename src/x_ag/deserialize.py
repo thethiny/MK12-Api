@@ -1,7 +1,8 @@
 import json
 import struct
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from enum import IntEnum
+import zlib
 
 from .enums import AGArray, AGBool, AGChar, AGFloat, AGInt, AGMap, AGTime, AGMapEnumReverse
 
@@ -112,6 +113,36 @@ def parse_maps(data, cursor, data_sub_type):
             string = f'"unk{i+1}":{val}'
             elements.append(string)
             elements.append(f'"deserialize_extra_meta": 6{data_sub_type}')
+    elif data_sub_type == 7:
+        # Compressed Object.
+        compression_type = data_to_int(data, cursor, 1, False)
+        cursor += 1
+
+        var = data[cursor]
+        value_type = get_subtype(var)
+        data_type = type(value_type)
+        data_sub_type = value_type.value
+
+        val, cursor = parse_general(data, cursor)
+        if data_type == AGChar and 2 < data_sub_type < 6 and compression_type != 0:
+            # Compression segment
+            if compression_type == 1:
+                val = b64decode(val[1:-1])
+                val = zlib.decompress(val)
+            else:
+                raise ValueError(f"Unsupported compression type {compression_type}")  
+        else:
+            # No compression
+            val = val
+        # elements.append(f'"CompressedObject":"{b64encode(val).decode()}"')
+        elements.append(f'"Compression":{compression_type}')
+        elements.append(f'"deserialize_extra_meta": 6{data_sub_type}')
+        val, new_cursor = parse_general(val, 0)
+        val = val.replace("\\\\", "\\")
+        # if len(val) != new_cursor:
+            # print(f"Warning: Expected {len(val)} but read {new_cursor}")
+        # val, cursor = parse_general(data, cursor)
+        elements.append(f'"DecompressedObject":{val}')
     else:
         raise NotImplementedError(f"Unknown Implementation for Subtype {data_sub_type} for Maps!")
     ret = "{" + ",".join(elements) + "}"
