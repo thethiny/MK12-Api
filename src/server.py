@@ -134,7 +134,7 @@ def redirect_route(server_name: str, url: str):
             "query_string": query_string
         }, f, ensure_ascii=False, indent=4)
 
-    with open(os.path.join(cur_request_root, "request_headers.json"), "w") as f:
+    with open(os.path.join(cur_request_root, "request_headers.json"), "w", encoding="utf-8") as f:
         json.dump(dict(request.headers), f, ensure_ascii=False, indent=4)
 
     with open(os.path.join(cur_request_root, "request.bin"), "wb") as f:
@@ -146,9 +146,9 @@ def redirect_route(server_name: str, url: str):
     except Exception as e:
         print(f"Failed to parse {url}")
         traceback.print_exc()
-        with open(os.path.join(cur_request_root, "error"), "w") as f:
-            # Make a file called error to know this didn't pass!
-            pass
+        with open(os.path.join(cur_request_root, "request_error"), "w") as f:
+            f.write(f"Exception: {str(e)}\n")
+            f.write(traceback.format_exc())
 
     # End of request
 
@@ -161,7 +161,7 @@ def redirect_route(server_name: str, url: str):
 
     # Start of response
 
-    with open(os.path.join(cur_request_root, "response_headers.json"), "w") as f:
+    with open(os.path.join(cur_request_root, "response_headers.json"), "w", encoding="utf-8") as f:
         json.dump(dict(response.headers), f, ensure_ascii=False, indent=4)
 
     with open(os.path.join(cur_request_root, "response.bin"), "wb") as f: 
@@ -170,8 +170,20 @@ def redirect_route(server_name: str, url: str):
     with open(os.path.join(cur_request_root, f"{response.status_code}.status_code"), "w") as f:
         f.write(str(response.status_code))
 
-    json_data, ext = parse_request_output(response, response.data)
-    save_data_as(cur_request_root, "response", ext, json_data)
+    try:
+        json_data, ext = parse_request_output(response, response.data)
+        save_data_as(cur_request_root, "response", ext, json_data)
+    except SyntaxError as e:
+        print(f"SyntaxError while parse_request_output of response at line {e.lineno}, char {e.offset}")
+        with open(os.path.join(cur_request_root, "response_error"), "w") as f:
+            f.write(f"Exception: {str(e)}\n")
+            f.write(traceback.format_exc())
+    except Exception as e:
+        print(f"Failed to parse {url}")
+        traceback.print_exc()
+        with open(os.path.join(cur_request_root, "response_error"), "w") as f:
+            f.write(f"Exception: {str(e)}\n")
+            f.write(traceback.format_exc())
 
     return response
 
