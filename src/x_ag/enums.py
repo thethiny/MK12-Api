@@ -23,8 +23,8 @@ class AGInt(IntEnum):
 
 class AGFloat(IntEnum):
     # 0x20
-    _FLT = 0
-    FLOAT = 1
+    FLOAT = 0
+    DOUBLE = 1
 
 
 class AGChar(IntEnum):
@@ -39,7 +39,7 @@ class AGChar(IntEnum):
 
 
 class AGTime(IntEnum):
-    # 0x40
+    # 0x40 # 4 Bytes Datetime::DateTime
     EPOCH = 0
 
 
@@ -57,9 +57,14 @@ class AGMap(IntEnum):
     MAP16 = 1
     MAP32 = 2
     MAP64 = 3
-    CompressedObject = 7 # Gotten form somewhere else
-    MAPU1 = 8
-    Calendar = 9
+    CompressedObject = 7 # Compressed Object. 1 byte compression type, then remaining bytes. If remaining bytes are not of type 8 (AGChar Binary) then compression disabled. So far only compression type ZLIB (0x1) exists.
+    MAPU1 = 8 # LocalizedString
+    Calendar = 9 # CalendarControlled # Buffer contains 2 objects. Parse objects 1 and 2. Remaining unimplemented yet.
+    
+class Unknown70(IntEnum):
+    # 0x70
+    UNK1 = 0 # HydraReference: Combination of 3 binaries in a row (AGChar Binary). The first 2 binaries are first converted into strings (AGChar Binary -> AGChar Char)
+    UNK2 = 1 # CalendarControlledPoejctions #  Calendar event single object
 
 
 AGMapEnum: Dict[EnumMeta, int] = {
