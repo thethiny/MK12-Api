@@ -41,7 +41,7 @@ jobs:
 
       - name: Get Release Version
         id: release_version
-        run: echo "::set-output name=server_version::n$(date +%d%m%y)"
+        run: echo "::set-output name=server_version::n$(date +%d%m%y_%H%M)"
             
       - name: Build Server
         run: pyinstaller --onefile src/server.py
@@ -53,8 +53,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SERVER_VERSION: ${{ steps.release_version.outputs.server_version }}
         with:
-          tag_name: ${{ env.SERVER_VERSION }}
-          release_name: Server ${{ env.SERVER_VERSION }}
+          tag_name: ${{ steps.release_version.outputs.server_version }}
+          release_name: Server ${{ steps.release_version.outputs.server_version }}
           draft: false
           prerelease: false
 
@@ -70,6 +70,6 @@ jobs:
           SERVER_VERSION: ${{ steps.release_version.outputs.server_version }}
         with:
           upload_url: ${{ steps.make_release.outputs.upload_url }}
-          asset_path: ./dist/${{ env.SERVER_VERSION }}.zip
-          asset_name: server_${{ env.SERVER_VERSION }}.zip
+          asset_path: ./dist/${{ steps.release_version.outputs.server_version }}.zip
+          asset_name: server_${{ steps.release_version.outputs.server_version }}.zip
           asset_content_type: application/zip
