@@ -96,6 +96,25 @@ def attack_url(url, injected_response, server, data = {}, skip_headers = False):
     return response
 
 
+DEFAULT_SERVER = "MVS"
+
+@app.route(
+    "/<path:url>",
+    methods=[
+        "GET",
+        "HEAD",
+        "POST",
+        "PUT",
+        "DELETE",
+        "CONNECT",
+        "OPTIONS",
+        "TRACE",
+        "PATCH",
+    ],
+)
+def redirect_fallback(url: str):
+    return redirect_route(DEFAULT_SERVER, url)
+
 @app.route(
     "/mitm/<string:server_name>/<path:url>",
     methods=[
