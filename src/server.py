@@ -133,6 +133,14 @@ def redirect_route(server_name: str, url: str):
     request_time = datetime.utcnow().timestamp()
     print(request, url)
 
+    orig_endpoint = servers_config[server]["endpoint"]
+    if url.lower().startswith(orig_endpoint.lower()):
+        url = url[len(orig_endpoint):].rstrip("/")
+        print("Warning: Fixed absolute -> relative")
+    elif url.lower().startswith("http"):
+        print("Warning: Out of Domain API!")
+        return redirect(url)
+
     if server_name not in servers_config:
         raise KeyError(f"Server {server_name} doesn't have a proper ENDPOINT in environment: `{server_name.upper()}_ENDPOINT`")
 
@@ -141,7 +149,7 @@ def redirect_route(server_name: str, url: str):
         os.makedirs(logging_folder, exist_ok=True)
         servers_config[server_name]["first_run"] = False
     cur_request_root = os.path.join(
-        logging_folder, f"{request_time}_{request.method}_{url.replace('/', '+')}"
+        logging_folder, f"{request_time}_{request.method}_{url.replace('/', '+').replace(':', '..')}"
     )
     os.makedirs(cur_request_root, exist_ok=True)
 

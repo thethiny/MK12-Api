@@ -72,9 +72,9 @@ def parse_strings(data: bytes, cursor: int, data_sub_type):
     if is_binary:
         string_data = b64encode(string_data).decode('utf-8')
     else:
-        string_data = string_data.decode("utf-8").replace('\"', '\\\"')
+        string_data = string_data.decode("utf-8")
     cursor += string_length
-    return '"' + string_data + '"', cursor
+    return json.dumps(string_data), cursor
 
 
 def parse_arrays(data, cursor, data_sub_type):
@@ -199,7 +199,8 @@ def deserialize(data: bytes):
 
     try:
         nan = float("nan")
-        return eval(parsed_string.encode("unicode-escape").decode())
+        # return eval(parsed_string.encode("unicode-escape").decode().replace("\\\"", "\""))
+        return eval(parsed_string)
     except TypeError:
         print("errored")
         print(parsed_string)
